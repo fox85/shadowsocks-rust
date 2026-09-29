@@ -842,6 +842,8 @@ Example configuration:
             "outbound_bind_addr": "11.22.33.44",
             // Outbound UDP socket allows IP fragmentation (default false)
             "outbound_udp_allow_fragmentation": false,
+            // Inbound UDP socket allows IP fragmentation (default false)
+            "inbound_udp_allow_fragmentation": false,
             // Route outbound TCP connections through a proxy or proxy chain
             // (TCP only; UDP is not proxied)
             // Works for both sslocal and ssserver
@@ -1168,6 +1170,22 @@ These Ciphers require `"password"` to be a Base64 string of key that have **exac
 [proxy_list]
 ||google.com
 8.8.8.8
+```
+
+### Runtime reload (Unix only)
+
+`sslocal` reloads files at runtime when it receives signals:
+
+- `SIGUSR1` - Reload the server list from the configuration file. Listeners and established connections are not affected. Requires that `sslocal` was started with a configuration file.
+- `SIGUSR2` - Reload the ACL file. The file is parsed completely before the new rules are swapped in; if parsing fails, the previous rules stay active. Established connections keep their routing decisions, and only new connections are checked against the new rules.
+
+The configuration file and the ACL file are recorded as absolute paths at startup, so reloads keep working even if the process changes its working directory afterwards (e.g. when daemonized).
+
+Both signals are no-ops on Windows. Example:
+
+```bash
+# After editing the ACL file, make sslocal apply it without a restart
+kill -USR2 $(pidof sslocal)
 ```
 
 ## Useful Tools
